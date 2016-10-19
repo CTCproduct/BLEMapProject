@@ -4,4 +4,5 @@
     <string name="send_button_text">送信</string>
     <string name="send_text">位置情報を送信する</string>
     <string name="list_name_text">Receive List</string>
+    <string name="device_name">XXXXXXXXXXXXXXX</string>
 </resources>
