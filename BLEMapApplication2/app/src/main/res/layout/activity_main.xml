@@ -1,49 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/mainName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/color"
+        android:background="@drawable/main_name_background"
         android:gravity="center"
-        android:text="地図表示アプリ"
+        android:text="@string/main_name_text"
         android:textColor="@android:color/background_light"
         android:textSize="24sp"
         android:textStyle="normal|bold" />
 
     <Button
-        android:id="@+id/button1"
+        android:id="@+id/sendButton"
         android:layout_width="120dp"
         android:layout_height="50dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="30dp"
-        android:background="@drawable/color3"
-        android:text="送信"
+        android:background="@drawable/send_button_background"
+        android:text="@string/send_button_text"
         android:textAlignment="center" />
 
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/sendText"
         android:layout_width="match_parent"
         android:layout_height="28dp"
         android:gravity="center"
-        android:text="位置情報を表示する"
+        android:text="@string/send_text"
         android:textAlignment="center" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/listName"
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:layout_gravity="center_horizontal"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
         android:layout_marginTop="30dp"
-        android:background="@drawable/color2"
+        android:background="@drawable/list_text_background"
         android:gravity="center"
-        android:text="Receive List"
+        android:text="@string/list_name_text"
         android:textAlignment="center" />
 
     <ListView
@@ -51,5 +52,6 @@
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
         android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp" />
+        android:layout_marginRight="20dp"
+        android:id="@+id/receiveText" />
 </LinearLayout>
