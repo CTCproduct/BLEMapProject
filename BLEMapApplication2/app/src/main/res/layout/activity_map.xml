@@ -30,10 +30,10 @@
                 android:elevation="24dp"
                 android:layout_marginLeft="5dp"
                 android:layout_gravity="center_vertical"
-                android:background="?android:attr/floatingToolbarCloseDrawable"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:backgroundTint="@android:color/white" />
+                android:backgroundTint="@color/common_google_signin_btn_text_dark_default"
+                android:background="@drawable/ic_back" />
         </FrameLayout>
 
     </LinearLayout>
