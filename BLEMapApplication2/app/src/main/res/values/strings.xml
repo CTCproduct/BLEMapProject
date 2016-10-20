@@ -5,4 +5,7 @@
     <string name="send_text">位置情報を送信する</string>
     <string name="list_name_text">Receive List</string>
     <string name="device_name">XXXXXXXXXXXXXXX</string>
+    <string name="sending_title">送信中</string>
+    <string name="sending_message">送信中です。</string>
+    <string name="cancel">Cancel</string>
 </resources>
