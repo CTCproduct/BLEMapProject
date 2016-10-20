@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">BLE Map Application</string>
+    <string name="main_name_text">地図表示アプリ</string>
+    <string name="send_button_text">送信</string>
+    <string name="send_text">位置情報を送信する</string>
+    <string name="list_name_text">Receive List</string>
 </resources>
