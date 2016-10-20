@@ -30,9 +30,10 @@
                 android:elevation="24dp"
                 android:layout_marginLeft="5dp"
                 android:layout_gravity="center_vertical"
-                android:background="@drawable/arrow_left_green"
+                android:background="?android:attr/floatingToolbarCloseDrawable"
                 android:layout_width="35dp"
-                android:layout_height="35dp" />
+                android:layout_height="35dp"
+                android:backgroundTint="@android:color/white" />
         </FrameLayout>
 
     </LinearLayout>
