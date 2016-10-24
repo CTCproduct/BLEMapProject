@@ -6,6 +6,10 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.AdvertiseCallback;
+import android.bluetooth.le.AdvertiseData;
+import android.bluetooth.le.AdvertiseSettings;
+import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -24,6 +28,8 @@ import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +37,15 @@ import com.google.android.gms.common.api.GoogleApiClient;
 
 public class MainActivity extends Activity implements LocationListener,View.OnClickListener,DialogInterface.OnClickListener {
     private static final int REQUEST_ENABLE_BLUETOOTH = 1;
+    private static final int MANUFACTURE_ID = 2000;
 
     private ReceivedDeviceAdapter mReceiveDeviceAdapter;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothLeScanner;
+    private BluetoothLeAdvertiser  mBluetoothLeAdvertiser;
+    private AdvertiseSettings.Builder mSettingsBuilder;
+    private AdvertiseData.Builder mDataBuilder;
+    private AdvertiseCallback mAdvertiseCallback;
     private ScanCallback mScanCallback;
     private LocationManager mLocationManager;
     private double mLat;
@@ -66,6 +77,21 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
         if (!mBluetoothAdapter.isEnabled()) {
             startBluetoothSetting();
         }
+
+        mBluetoothLeAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
+        final boolean isAdvertiseSupported = mBluetoothLeAdvertiser != null;
+
+        // Advertiseサポートチェック
+        if(!isAdvertiseSupported){
+            Toast.makeText(this, getResources().getString(R.string.advertise_unsupported), Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
+        mSettingsBuilder = new AdvertiseSettings.Builder();
+        mSettingsBuilder.setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_POWER);
+        mSettingsBuilder.setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM);
+        mSettingsBuilder.setTimeout(0);
+        mSettingsBuilder.setConnectable(true);
     }
 
     @Override
@@ -75,17 +101,24 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         mScanCallback = new IBeaconScanCallback();
         mBluetoothLeScanner.startScan(mScanCallback);
+
+        if (mIsDialogShown){
+            mBluetoothLeAdvertiser.startAdvertising(mSettingsBuilder.build(), mDataBuilder.build(), mAdvertiseCallback);
+        }
+
     }
 
     @Override
     protected void onPause() {
         stopScan();
+        stopAdvertise();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         stopScan();
+        stopAdvertise();
         super.onDestroy();
     }
 
@@ -107,6 +140,12 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
         if (mBluetoothLeScanner != null) {
             mBluetoothLeScanner.stopScan(mScanCallback);
             mScanCallback = null;
+        }
+    }
+
+    private void stopAdvertise(){
+        if(mBluetoothLeAdvertiser != null){
+            mBluetoothLeAdvertiser.stopAdvertising(mAdvertiseCallback);
         }
     }
 
@@ -205,6 +244,16 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
                     } else {
                         locationStart();
                     }
+                    final byte[] manufacturerData = new byte[23];
+                    ByteBuffer byteBuffer = ByteBuffer.wrap(manufacturerData);
+                    byteBuffer.order(ByteOrder.BIG_ENDIAN);
+                    byteBuffer.putDouble(mLat);
+                    byteBuffer.putDouble(mLong);
+
+                    mDataBuilder = new AdvertiseData.Builder();
+                    mDataBuilder.addManufacturerData(MANUFACTURE_ID, manufacturerData);
+                    mAdvertiseCallback = new IBeaconAdvertiseCallback();
+                    mBluetoothLeAdvertiser.startAdvertising(mSettingsBuilder.build(), mDataBuilder.build(), mAdvertiseCallback);
                     break;
                 default:
                     break;
@@ -220,6 +269,20 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
             return;
         }
         mLocationManager.removeUpdates(this);
+        stopAdvertise();
+    }
+
+    public class IBeaconAdvertiseCallback extends AdvertiseCallback {
+
+        @Override
+        public void onStartSuccess(AdvertiseSettings settingsInEffect) {
+            super.onStartSuccess(settingsInEffect);
+        }
+
+        @Override
+        public void onStartFailure(int errorCode) {
+            super.onStartFailure(errorCode);
+        }
     }
 
     public class IBeaconScanCallback extends ScanCallback {
