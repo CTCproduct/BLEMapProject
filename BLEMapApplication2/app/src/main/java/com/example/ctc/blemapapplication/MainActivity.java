@@ -4,9 +4,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,11 +21,18 @@ import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 
 public class MainActivity extends Activity implements LocationListener,View.OnClickListener,DialogInterface.OnClickListener {
+    private static final int REQUEST_ENABLE_BLUETOOTH = 1;
+
+    private ReceivedDeviceAdapter mReceiveDeviceAdapter;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothLeScanner;
     private ScanCallback mScanCallback;
@@ -40,6 +49,8 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
         setContentView(R.layout.activity_main);
 
         mIsDialogShown = false;
+        ListView receiveDeviceList = (ListView) findViewById(R.id.receiveList);
+        receiveDeviceList.setAdapter(mReceiveDeviceAdapter);
 
         final BluetoothManager manager = (BluetoothManager) this.getSystemService(this.BLUETOOTH_SERVICE);
         mBluetoothAdapter = manager.getAdapter();
@@ -47,14 +58,13 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
         // Bluetoothサポートチェック
         final boolean isBluetoothSupported = mBluetoothAdapter != null;
         if (!isBluetoothSupported) {
-            // 非サポート時の処理　あとで書く
-            return;
+            Toast.makeText(this, getResources().getString(R.string.bluetooth_unsupported), Toast.LENGTH_SHORT).show();
+            finish();
         }
 
         // Bluetoothオンかチェック
         if (!mBluetoothAdapter.isEnabled()) {
-            // オフ時の処理　あとで書く
-            return;
+            startBluetoothSetting();
         }
     }
 
@@ -79,8 +89,21 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
         super.onDestroy();
     }
 
-    public void stopScan() {
-        // スキャン停止
+    private void startBluetoothSetting() {
+        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(intent, REQUEST_ENABLE_BLUETOOTH);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int ResultCode, Intent date){
+        if(requestCode == REQUEST_ENABLE_BLUETOOTH){
+            if(ResultCode != Activity.RESULT_OK){
+                startBluetoothSetting();
+            }
+        }
+    }
+
+    private void stopScan() {
         if (mBluetoothLeScanner != null) {
             mBluetoothLeScanner.stopScan(mScanCallback);
             mScanCallback = null;
@@ -197,5 +220,47 @@ public class MainActivity extends Activity implements LocationListener,View.OnCl
             return;
         }
         mLocationManager.removeUpdates(this);
+    }
+
+    public class IBeaconScanCallback extends ScanCallback {
+        private ArrayList<ReceiveDeviceItem> deviceList = new ArrayList<>();
+        private ArrayList<BluetoothDevice> addedList = new ArrayList<>();
+
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+
+            if (result != null && result.getScanRecord() != null && result.getScanRecord().getDeviceName() != null) {
+                if (!isAdded(result.getDevice())) {
+                    // TODO : パラメータを取得して saveDevice() を呼び出す
+                }
+            }
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+        }
+
+        // スキャンしたデバイスのリスト保存
+        private void saveDevice(BluetoothDevice device, String deviceName, double longitude, double latitude) {
+            if (addedList == null) {
+                addedList = new ArrayList<>();
+            }
+            addedList.add(device);
+            deviceList.add(new ReceiveDeviceItem(deviceName, longitude, latitude));
+            mReceiveDeviceAdapter = new ReceivedDeviceAdapter(MainActivity.this, deviceList);
+            mReceiveDeviceAdapter.notifyDataSetChanged();
+        }
+
+        // スキャンしたデバイスがリストに追加済みかどうかの確認
+        private boolean isAdded(BluetoothDevice device) {
+            return addedList != null && addedList.size() > 0 && addedList.contains(device);
+        }
     }
 }
